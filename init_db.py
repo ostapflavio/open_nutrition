@@ -2,7 +2,7 @@ from alembic.config import Config
 from alembic import command 
 
 def main():
-    cfg = Config("migrations/alembic.ini")
+    cfg = Config("alembic.ini")
     command.upgrade(cfg, 'head')
     print("Database initialized!")
 

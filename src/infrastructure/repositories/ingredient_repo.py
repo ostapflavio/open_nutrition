@@ -55,7 +55,7 @@ class IngredientRepo:
             raise IngredientNotFound(f"Ingredient with {'ID' if isinstance(identifier, int) else 'name'} '{identifier}' not found.")
         
         for key, value in kwargs.items():
-            if hasattr(ingredient, key):
+            if hasattr(ingredient, key) and value is not None:
                 setattr(ingredient, key, value)
         
         self.session.commit()
