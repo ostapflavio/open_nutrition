@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Column, Integer, String, Float, 
+    Column, Integer, String, Float, func,
     DateTime, ForeignKey, CheckConstraint, UniqueConstraint
 )
 from sqlalchemy.orm import declarative_base, relationship 
@@ -7,7 +7,7 @@ from datetime import datetime
 
 Base = declarative_base()
 
-class Meal(Base):
+class MealModel(Base):
     """
     A meal eaten at a specific time.
     """
@@ -15,7 +15,7 @@ class Meal(Base):
     __tablename__ = 'history_meals'
 
     id        = Column(Integer, primary_key = True)
-    timestamp = Column(DateTime, default = datetime.utcnow, nullable = False)
+    eaten_at = Column(DateTime(timezone=True), server_default=func.now(), nullable = False)
     name      = Column(String(64), nullable = False)
 
     # one meal -> many entries
@@ -35,7 +35,7 @@ class Meal(Base):
     def __repr__(self) -> str:
         return f"<Meal id={self.id} name = '{self.name}'>"
 
-class MealEntry(Base):
+class MealEntryModel(Base):
     """
     A single ingredient entry inside a meal. 
     """
@@ -56,14 +56,14 @@ class MealEntry(Base):
     def __repr__(self) -> str:
         return f"<MealEntry id = {self.id} meal_id = {self.meal_id} g = {self.grams}>"
 
-class FavoriteMeal(Base):
+class FavoriteMealModel(Base):
     """
     A user-starred snapshot pointing back to a Meal. 
     """
     __tablename__ = 'favorite_meals'
     id            = Column(Integer, primary_key = True)
     meal_id       = Column(Integer, ForeignKey('history_meals.id'), nullable = False, index = True)
-    starred_at    = Column(DateTime, default = datetime.utcnow, nullable = False)
+    starred_at    = Column(DateTime(timezone=True), server_default = func.now(), nullable = False)
     name          = Column(String(64), nullable = False)
 
     meal = relationship('Meal', back_populates = 'favorites')
@@ -75,7 +75,7 @@ class FavoriteMeal(Base):
     def __repr__(self) -> str:
         return f"<FavoriteMeal id = {self.id} name = '{self.name}' meal_id = {self.meal_id}"
 
-class Ingredient(Base):
+class IngredientModel(Base):
     __tablename__ = 'ingredients'
 
     id                   = Column(Integer, primary_key = True)
@@ -85,7 +85,7 @@ class Ingredient(Base):
     fats_per_100g        = Column(Float, nullable = False)
     proteins_per_100g    = Column(Float, nullable = False)
     source               = Column(String(10), nullable = False)
-    external_id          = Column(Integer, nullable = False)
+    external_id          = Column(String(64), nullable = False)
 
     meal_entries   = relationship('MealEntry', back_populates = 'ingredient')
 

@@ -1,4 +1,27 @@
 from src.domain import IngredientSource, Ingredient
+from src.domain.errors import IngredientNotFound
+from src.data.database_models import IngredientModel
+
+def _to_domain(row: IngredientModel) -> Ingredient:
+    if row is None:
+        raise IngredientNotFound("Ingredient not found.")
+
+    # convert to enum 
+    source = row.source 
+
+    if not isinstance(source, IngredientSource):
+        source = IngredientSource(source)
+
+    return Ingredient(
+    id=row.id,
+    name=row.name,
+    fats_per_100g=row.fats_per_100g,
+    proteins_per_100g=row.proteins_per_100g,
+    carbs_per_100g=row.carbs_per_100g,
+    kcal_per_100g=row.kcal_per_100g,
+    source=source,
+    external_id=row.external_id,
+    ) 
 
 class IngredientRepo:
     """
@@ -28,7 +51,7 @@ class IngredientRepo:
             external_id: int = -1
     ) -> Ingredient:
         """Create a new ingredient. """
-        ingredient = Ingredient(
+        ingredient = IngredientModel(
                         name = name, 
                         kcal_per_100g = kcal_per_100g, 
                         carbs_per_100g = carbs_per_100g, 

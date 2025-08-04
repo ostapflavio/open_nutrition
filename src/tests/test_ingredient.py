@@ -1,6 +1,6 @@
 from src.domain import IngredientSource, Ingredient 
 from src.infrastructure.repositories.ingredient_repo import IngredientRepo 
-from src.domain.exceptions import IngredientNotFound 
+from src.domain.errors import IngredientNotFound 
 
 def test_create_and_get_by_id(session):
     repo = IngredientRepo(session)
