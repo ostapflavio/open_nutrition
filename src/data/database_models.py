@@ -19,14 +19,14 @@ class MealModel(Base):
 
     # one meal -> many entries
     entries = relationship(
-        'MealEntry', 
+        'MealEntryModel', 
         back_populates = 'meal', 
         cascade = 'all, delete-orphan'
     ) 
 
    # one meal can be saved as favorite
     favorites = relationship(
-        'FavoriteMeal', 
+        'FavoriteMealModel', 
         back_populates = 'meal', 
         cascade = 'all, delete-orphan'
     )
@@ -45,8 +45,8 @@ class MealEntryModel(Base):
     ingredient_id = Column(Integer, ForeignKey('ingredients.id'), nullable = False, index = True)
     grams         = Column(Float, nullable = False)
 
-    meal       = relationship('Meal', back_populates = 'entries')
-    ingredient = relationship('Ingredient', back_populates = 'meal_entries')
+    meal       = relationship('MealModel', back_populates = 'entries')
+    ingredient = relationship('IngredientModel', back_populates = 'meal_entries')
 
     __table_args__ = (
         CheckConstraint('grams >= 0', name = 'GRAMS_NOT_NEGATIVE'),
@@ -65,7 +65,7 @@ class FavoriteMealModel(Base):
     starred_at    = Column(DateTime(timezone=True), server_default = func.now(), nullable = False)
     name          = Column(String(64), nullable = False)
 
-    meal = relationship('Meal', back_populates = 'favorites')
+    meal = relationship('MealModel', back_populates = 'favorites')
 
     __table_args__ = (
         UniqueConstraint("meal_id", name = "UQ_favorite_unique_meal"),
@@ -86,7 +86,7 @@ class IngredientModel(Base):
     source               = Column(String(10), nullable = False)
     external_id          = Column(String(64), nullable = False)
 
-    meal_entries   = relationship('MealEntry', back_populates = 'ingredient')
+    meal_entries   = relationship('MealEntryModel', back_populates = 'ingredient')
 
     __table_args__ = (
         CheckConstraint('kcal_per_100g >= 0', name = 'KCAL_NOT_NEGATIVE'),
