@@ -13,6 +13,12 @@ class InvalidIngredient(DomainError):
 @dataclass 
 class IngredientNotFound(DomainError):
     code: ClassVar[str] = "INGREDIENT_NOT_FOUND"
+    def __init__(self, message: str | None = None, identifier: int | str | None = None):
+        if message is None:
+            message = f"Ingredient not found{f': {identifier!r}' if identifier is not None else ''}."
+        self.identifier = identifier
+        self.message = message  
+        super().__init__(message)
 
 @dataclass 
 class IngredientAlreadyExists(DomainError):

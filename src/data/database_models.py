@@ -3,7 +3,6 @@ from sqlalchemy import (
     DateTime, ForeignKey, CheckConstraint, UniqueConstraint
 )
 from sqlalchemy.orm import declarative_base, relationship 
-from datetime import datetime 
 
 Base = declarative_base()
 
