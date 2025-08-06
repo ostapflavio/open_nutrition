@@ -6,7 +6,6 @@ from datetime import datetime
 # ---------- Entities ----------
 @dataclass
 class Ingredient: 
-    id: int | None
     name: str
     fats_per_100g:    float 
     proteins_per_100g: float
@@ -14,6 +13,7 @@ class Ingredient:
     kcal_per_100g:    float
     source: IngredientSource 
     external_id: str | None
+    id: int | None = None
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Ingredient):
@@ -22,11 +22,12 @@ class Ingredient:
 
 @dataclass
 class Meal:
-    id: int
     name: str
     eaten_at: datetime
     entries: list[MealEntry]
     is_favorite: bool = False 
+    id: int | None = None
+
     def __post_init__(self):
         if self.eaten_at.tzinfo is None:
             raise ValueError("eaten_at must be timezone-aware (UTC)")

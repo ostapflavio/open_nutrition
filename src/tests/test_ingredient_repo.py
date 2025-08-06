@@ -43,7 +43,7 @@ def test_find_by_name_no_match(session, seed_ingredients):
 
 def test_create_persists_and_converts_source(session):
     repo = IngredientRepo(session)
-    created = repo.create(
+    domain_ingredient = Ingredient(
         name="Greek Yogurt",
         kcal_per_100g=59.0,
         carbs_per_100g=3.6, 
@@ -52,6 +52,7 @@ def test_create_persists_and_converts_source(session):
         source=IngredientSource.USDA, 
         external_id="APPROVED!"
     )
+    created = repo.create(domain_ingredient)
 
     assert isinstance(created, Ingredient)
     assert created.name == "Greek Yogurt"
