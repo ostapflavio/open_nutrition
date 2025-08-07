@@ -6,7 +6,7 @@ from app.database_models import (
     FavoriteMealModel as FavoriteMealEntity
 )
 
-class MealRepository:
+class MealRepo:
     """
     A repositoty to work with database, meal table
     """
@@ -91,15 +91,15 @@ class MealRepository:
                 ingredient_id=e.ingredient_id,
                 grams=e.grams,
             )
-            for e in ent.meal_entries
+            for e in ent.meal_entries 
         ]
         # you could compute macros here or use MacroTotals if you persist them
-        # totals = MacroTotals.from_entries(entries)
+        # totals = MacroTotals.from_entries(entries) -- Complet de acord, s-ar putea asa de facut; Este posibil de utilizat Meal.compute_totals(), dar se poate de definit si ca alt camp. Discutam. (C) Flavio
         return Meal(
             id=ent.id,
             name=ent.name,
             eaten_at=ent.eaten_at,
-            is_favourite=ent.is_favourite,
+            is_favorite=ent.is_favorite,
             entries=entries,
             #macro_totals=totals
         )

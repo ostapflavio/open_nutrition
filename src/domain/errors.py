@@ -27,6 +27,12 @@ class IngredientAlreadyExists(DomainError):
 @dataclass 
 class MealNotFound(DomainError):
     code: ClassVar[str] = "MEAL_NOT_FOUND"
+    def __init__(self, message: str | None = None, identifier: int | str | None = None):
+        if message is None:
+            message = f"Meal not found{f': {identifier!r}' if identifier is not None else ''}."
+        self.identifier = identifier
+        self.message = message  
+        super().__init__(message)
 
 @dataclass
 class InvalidMeal(DomainError):

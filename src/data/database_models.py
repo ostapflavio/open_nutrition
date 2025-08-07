@@ -25,9 +25,10 @@ class MealModel(Base):
     ) 
 
    # one meal can be saved as favorite
-    favorites = relationship(
+    favorite = relationship(
         'FavoriteMealModel', 
         back_populates = 'meal', 
+        uselist = False, # enfroce one-to-one relationship 
         cascade = 'all, delete-orphan'
     )
 
@@ -65,7 +66,7 @@ class FavoriteMealModel(Base):
     starred_at    = Column(DateTime(timezone=True), server_default = func.now(), nullable = False)
     name          = Column(String(64), nullable = False)
 
-    meal = relationship('MealModel', back_populates = 'favorites')
+    meal = relationship('MealModel', back_populates = 'favorite')
 
     __table_args__ = (
         UniqueConstraint("meal_id", name = "UQ_favorite_unique_meal"),
