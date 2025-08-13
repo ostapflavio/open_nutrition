@@ -1,9 +1,9 @@
 # src/infrastructure/repositories/meal_repo.py  (path example)
 from src.domain import Meal, MealEntry, Ingredient, IngredientSource
+from src.domain.errors import MealNotFound
 from src.data.database_models import MealModel, MealEntryModel, IngredientModel
 from sqlalchemy import func
 from datetime import timezone, tzinfo
-
 
 class MealRepo:
     def __init__(self, session):
@@ -12,7 +12,7 @@ class MealRepo:
     def get_by_id(self, id: int) -> Meal:
         ent: MealModel | None = self.session.get(MealModel, id)
         if ent is None:
-            return None  # or raise a NotFound if you define one
+            raise MealNotFound("This meal doesn't exist!")
         return self._to_domain(ent)
 
     def find_by_name(self, query: str, limit: int) -> list[Meal]:

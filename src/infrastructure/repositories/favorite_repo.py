@@ -13,7 +13,7 @@ class FavoriteRepo:
         favorite: FavoriteMealModel = self.session.get(FavoriteMealModel, favorite_id) 
         if favorite is None:
             # TODO: Rework the NotFound error 
-            raise MealNotFound(message = "Favorite meal was not found!", entity_id = favorite_id)
+            raise MealNotFound(message = "Favorite meal was not found!", identifier = favorite_id)
 
         meal_id: int = favorite.meal_id
         return self._meal_repo.get_by_id(meal_id) 
@@ -37,7 +37,7 @@ class FavoriteRepo:
         favorite = self.session.get(FavoriteMealModel, favorite_id)
         if favorite is None:
             # TODO: Rework the NotFound error 
-            raise MealNotFound(message = "Favorite meal was not found!", entity_id = favorite_id)
+            raise MealNotFound(message = "Favorite meal was not found!", identifier = favorite_id)
 
         self.session.delete(favorite) 
         self.session.commit()
@@ -48,7 +48,7 @@ class FavoriteRepo:
         favorite: FavoriteMealModel = self.session.get(FavoriteMealModel, favorite_id)
         if favorite is None:
             # TODO: Rework the NotFound error 
-            raise MealNotFound(message = "Favorite meal was not found!", entity_id = favorite_id)
+            raise MealNotFound(message = "Favorite meal was not found!", identifier = favorite_id)
 
         meal_id: int = favorite.meal_id 
         current_meal: Meal = self._meal_repo.update(meal_id, domain_meal)
