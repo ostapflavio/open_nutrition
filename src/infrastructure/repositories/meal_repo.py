@@ -1,54 +1,46 @@
-from src.domain import Meal, MealEntry, MacroTotals
+# src/infrastructure/repositories/meal_repo.py  (path example)
+from src.domain import Meal, MealEntry, Ingredient, IngredientSource
+from src.data.database_models import MealModel, MealEntryModel, IngredientModel
+from sqlalchemy import func
+from datetime import timezone, tzinfo
 
-from app.database_models import (
-    MealModel as MealEntity,
-    MealEntryModel as MealEntryEntity,
-    FavoriteMealModel as FavoriteMealEntity
-)
 
 class MealRepo:
-    """
-    A repositoty to work with database, meal table
-    """
-
     def __init__(self, session):
-        #Define a global session so that we can operate with database
         self.session = session
 
     def get_by_id(self, id: int) -> Meal:
-        """Find the ingredient by id. """
-        entity: MealEntity = self.session.get(MealEntity, id)
-        return self._to_domain(entity)
-
+        ent: MealModel | None = self.session.get(MealModel, id)
+        if ent is None:
+            return None  # or raise a NotFound if you define one
+        return self._to_domain(ent)
 
     def find_by_name(self, query: str, limit: int) -> list[Meal]:
-        """
-        Function that returns a list of Meals matching the given name.
-        """
-        ents: list[MealEntity] = (
-            self.session
-            .query(MealEntity)
-            .filter(MealEntity.name.like(f"%{query.lower()}%"))
+        ents: list[MealModel] = (
+            self.session.query(MealModel)
+            .filter(func.lower(MealModel.name).like(f"%{query.lower()}%"))
             .limit(limit)
             .all()
         )
         return [self._to_domain(e) for e in ents]
 
     def create(self, domain_meal: Meal) -> Meal:
-        # 1) Persist the Meal itself
-        ent = MealEntity(
+        ent = MealModel(
             name=domain_meal.name,
-            eaten_at=domain_meal.eaten_at,
+            eaten_at=domain_meal.eaten_at.astimezone(timezone.utc),
         )
         self.session.add(ent)
-        self.session.flush()  # so ent.id is assigned
+        self.session.flush()  # assign ent.id
 
-        # 2) Persist each MealEntry
+        # domain entries: MealEntry(ingredient: Ingredient, quantity_g: float)
         for de in domain_meal.entries:
-            me = MealEntryEntity(
+            ing_id = de.ingredient.id
+            if ing_id is None:
+                raise ValueError("MealEntry.ingredient.id must be set")
+            me = MealEntryModel(
                 meal_id=ent.id,
-                ingredient_id=de.ingredient_id,
-                grams=de.grams,
+                ingredient_id=ing_id,
+                grams=de.quantity_g,
             )
             self.session.add(me)
 
@@ -56,20 +48,25 @@ class MealRepo:
         return self._to_domain(ent)
 
     def update(self, meal_id: int, domain_meal: Meal) -> Meal:
-        ent = self.session.get(MealEntity, meal_id)
+        ent = self.session.get(MealModel, meal_id)
+        if ent is None:
+            return None  # or raise NotFound
 
-        # update scalar fields
-        ent.name         = domain_meal.name
-        ent.eaten_at     = domain_meal.eaten_at
+        # scalars
+        ent.name = domain_meal.name
+        ent.eaten_at = domain_meal.eaten_at.astimezone(timezone.utc)
 
-        # replace entries wholesale (simple approach)
-        ent.meal_entries.clear()
+        # replace entries wholesale
+        ent.entries.clear()              # relationship name is `entries` on MealModel
         self.session.flush()
         for de in domain_meal.entries:
-            me = MealEntryEntity(
+            ing_id = de.ingredient.id
+            if ing_id is None:
+                raise ValueError("MealEntry.ingredient.id must be set")
+            me = MealEntryModel(
                 meal_id=ent.id,
-                ingredient_id=de.ingredient_id,
-                grams=de.grams,
+                ingredient_id=ing_id,
+                grams=de.quantity_g,
             )
             self.session.add(me)
 
@@ -77,29 +74,49 @@ class MealRepo:
         return self._to_domain(ent)
 
     def delete(self, meal_id: int) -> None:
-        ent = self.session.get(MealEntity, meal_id)
+        ent = self.session.get(MealModel, meal_id)
+        if ent is None:
+            return  # or raise NotFound
         self.session.delete(ent)
         self.session.commit()
 
     # ——— Conversion helpers ———
 
-    def _to_domain(self, ent: MealEntity) -> Meal:
-        # build domain entries
+    def _to_domain_ingredient(self, row: IngredientModel) -> Ingredient:
+        # DB stores source as str; domain wants IngredientSource enum
+        return Ingredient(
+            id=row.id,
+            name=row.name,
+            fats_per_100g=row.fats_per_100g,
+            proteins_per_100g=row.proteins_per_100g,
+            carbs_per_100g=row.carbs_per_100g,
+            kcal_per_100g=row.kcal_per_100g,
+            source=IngredientSource(row.source),
+            external_id=row.external_id,
+        )
+
+    def _ensure_utc(self, dt):
+        #asume DB times are UTC, attach tzinfo if missing
+        if dt is None:
+            return None
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt
+
+
+    def _to_domain(self, ent: MealModel) -> Meal:
+        eaten_at = self._ensure_utc(ent.eaten_at)
         entries = [
             MealEntry(
-                id=e.id,
-                ingredient_id=e.ingredient_id,
-                grams=e.grams,
+                ingredient=self._to_domain_ingredient(e.ingredient),  # use relationship
+                quantity_g=e.grams,
             )
-            for e in ent.meal_entries 
+            for e in ent.entries
         ]
-        # you could compute macros here or use MacroTotals if you persist them
-        # totals = MacroTotals.from_entries(entries) -- Complet de acord, s-ar putea asa de facut; Este posibil de utilizat Meal.compute_totals(), dar se poate de definit si ca alt camp. Discutam. (C) Flavio
         return Meal(
             id=ent.id,
             name=ent.name,
-            eaten_at=ent.eaten_at,
-            is_favorite=ent.is_favorite,
+            eaten_at=eaten_at,
+            is_favorite=(ent.favorite is not None),  # MealModel has `favorite` relation, not `is_favorite` field
             entries=entries,
-            #macro_totals=totals
         )
