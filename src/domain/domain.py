@@ -3,10 +3,9 @@ from enum import Enum
 from dataclasses import dataclass 
 from datetime import datetime 
 
-# Entities
+# ---------- Entities ----------
 @dataclass
 class Ingredient: 
-    id: int | None
     name: str
     fats_per_100g:    float 
     proteins_per_100g: float
@@ -14,19 +13,29 @@ class Ingredient:
     kcal_per_100g:    float
     source: IngredientSource 
     external_id: str | None
+    id: int | None = None
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Ingredient):
+            return NotImplemented
+        return (self.id is not None and other.id is not None and self.id == other.id)
 
 @dataclass
 class Meal:
-    id: int
     name: str
-    timestamp: datetime
+    eaten_at: datetime
     entries: list[MealEntry]
     is_favorite: bool = False 
+    id: int | None = None
+
+    def __post_init__(self):
+        if self.eaten_at.tzinfo is None:
+            raise ValueError("eaten_at must be timezone-aware (UTC)")
 
     def compute_totals(self) -> MacroTotals:
         pass
     
-# Value objects
+# ---------- Value Objects ----------
 class IngredientSource(Enum): 
     USDA = "usda"  
     CUSTOM = "custom"
@@ -35,6 +44,10 @@ class IngredientSource(Enum):
 class MealEntry:
     ingredient: Ingredient
     quantity_g: float
+
+    def __post_init__(self):
+        if self.quantity_g <= 0:
+            raise ValueError("quantity_g must be > 0")
 
     def compute_macros(self) -> MacroTotals:
         pass
@@ -70,64 +83,9 @@ class DataRange:
     start: datetime 
     end:   datetime 
 
-# Handle Errors 
-@dataclass 
-class AppError(Exception):
-    code: str                        # "INGREDIENT_NOT_FOUND" 
-    message: str                     # human redable 
-    entity: str | None = None        # "Ingredient", "Meal"
-    entity_id: str | None = None 
+    def __post_init__(self):
+        if self.start.tzinfo is None or self.end.tzinfo is None:
+            raise ValueError("DataRange datetimes mut be timezone-aware")
 
-@dataclass
-class IngredientNotFound(AppError):
-      
-
-@dataclass
-class IngredientAlreadyExists(AppError):
-    pass
-
-@dataclass
-class InvalidIngredient(AppError):
-    pass
-
-@dataclass
-class MealNotFound(AppError):
-    pass
-
-@dataclass
-class InvalidMeal(AppError):
-    pass 
-
-@dataclass
-class FavoriteAlreadyExists(AppError):
-    pass
-
-@dataclass
-class EmptyMeal(AppError):
-    pass
-
-@dataclass
-class InvalidDateRange(AppError):
-    pass
-
-@dataclass
-class ExternalServiceError(AppError):
-    pass
-
-@dataclass
-class ExternalServiceTimeout(AppError):
-    pass
-
-@dataclass
-class ExternalIngredientFormatError(AppError):
-    pass
-
-@dataclass
-class DatabaseError(AppError):
-    pass
-
-@dataclass
-class UnexpectedError(AppError):
-    pass
-
-
+        if self.end < self.start:
+            raise ValueError("DataRange.end must be >= start")

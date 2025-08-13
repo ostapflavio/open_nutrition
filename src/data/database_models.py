@@ -1,13 +1,12 @@
 from sqlalchemy import (
-    Column, Integer, String, Float, 
+    Column, Integer, String, Float, func,
     DateTime, ForeignKey, CheckConstraint, UniqueConstraint
 )
 from sqlalchemy.orm import declarative_base, relationship 
-from datetime import datetime 
 
 Base = declarative_base()
 
-class Meal(Base):
+class MealModel(Base):
     """
     A meal eaten at a specific time.
     """
@@ -15,27 +14,28 @@ class Meal(Base):
     __tablename__ = 'history_meals'
 
     id        = Column(Integer, primary_key = True)
-    timestamp = Column(DateTime, default = datetime.utcnow, nullable = False)
+    eaten_at = Column(DateTime(timezone=True), server_default=func.now(), nullable = False)
     name      = Column(String(64), nullable = False)
 
     # one meal -> many entries
     entries = relationship(
-        'MealEntry', 
+        'MealEntryModel', 
         back_populates = 'meal', 
         cascade = 'all, delete-orphan'
     ) 
 
    # one meal can be saved as favorite
-    favorites = relationship(
-        'FavoriteMeal', 
+    favorite = relationship(
+        'FavoriteMealModel', 
         back_populates = 'meal', 
+        uselist = False, # enfroce one-to-one relationship 
         cascade = 'all, delete-orphan'
     )
 
     def __repr__(self) -> str:
         return f"<Meal id={self.id} name = '{self.name}'>"
 
-class MealEntry(Base):
+class MealEntryModel(Base):
     """
     A single ingredient entry inside a meal. 
     """
@@ -46,8 +46,8 @@ class MealEntry(Base):
     ingredient_id = Column(Integer, ForeignKey('ingredients.id'), nullable = False, index = True)
     grams         = Column(Float, nullable = False)
 
-    meal       = relationship('Meal', back_populates = 'entries')
-    ingredient = relationship('Ingredient', back_populates = 'meal_entries')
+    meal       = relationship('MealModel', back_populates = 'entries')
+    ingredient = relationship('IngredientModel', back_populates = 'meal_entries')
 
     __table_args__ = (
         CheckConstraint('grams >= 0', name = 'GRAMS_NOT_NEGATIVE'),
@@ -56,17 +56,17 @@ class MealEntry(Base):
     def __repr__(self) -> str:
         return f"<MealEntry id = {self.id} meal_id = {self.meal_id} g = {self.grams}>"
 
-class FavoriteMeal(Base):
+class FavoriteMealModel(Base):
     """
     A user-starred snapshot pointing back to a Meal. 
     """
     __tablename__ = 'favorite_meals'
     id            = Column(Integer, primary_key = True)
     meal_id       = Column(Integer, ForeignKey('history_meals.id'), nullable = False, index = True)
-    starred_at    = Column(DateTime, default = datetime.utcnow, nullable = False)
+    starred_at    = Column(DateTime(timezone=True), server_default = func.now(), nullable = False)
     name          = Column(String(64), nullable = False)
 
-    meal = relationship('Meal', back_populates = 'favorites')
+    meal = relationship('MealModel', back_populates = 'favorite')
 
     __table_args__ = (
         UniqueConstraint("meal_id", name = "UQ_favorite_unique_meal"),
@@ -75,7 +75,7 @@ class FavoriteMeal(Base):
     def __repr__(self) -> str:
         return f"<FavoriteMeal id = {self.id} name = '{self.name}' meal_id = {self.meal_id}"
 
-class Ingredient(Base):
+class IngredientModel(Base):
     __tablename__ = 'ingredients'
 
     id                   = Column(Integer, primary_key = True)
@@ -85,9 +85,9 @@ class Ingredient(Base):
     fats_per_100g        = Column(Float, nullable = False)
     proteins_per_100g    = Column(Float, nullable = False)
     source               = Column(String(10), nullable = False)
-    external_id          = Column(Integer, nullable = False)
+    external_id          = Column(String(64), nullable = False)
 
-    meal_entries   = relationship('MealEntry', back_populates = 'ingredient')
+    meal_entries   = relationship('MealEntryModel', back_populates = 'ingredient')
 
     __table_args__ = (
         CheckConstraint('kcal_per_100g >= 0', name = 'KCAL_NOT_NEGATIVE'),
