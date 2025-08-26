@@ -18,7 +18,7 @@ def handle_db_errors(
 
             # CLIENT: deterministic data conflicts (unique / fk / check)
             except exc.IntegrityError as e:
-                raise Data
+                pass 
             
             # CLIENT: bad data sent 
             except exc.DataError as e:
