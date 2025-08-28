@@ -1,7 +1,7 @@
 from src.domain import Ingredient
 from src.domain.errors import IngredientNotFound
 from src.data.database_models import IngredientModel
-from sqlalchemy import func
+from sqlalchemy import func, select
 
 
 
@@ -32,8 +32,23 @@ class IngredientRepo:
         row: IngredientModel = self.session.get(IngredientModel, id)
         return self._to_domain(row)
 
+    def get_many(self, ids: list[int]) -> dict[int, Ingredient]:
+        """Find multiple ingredients using a list of ids. """
+        if not ids:
+            return {}
 
-    
+        result: dict[int, Ingredient] = {}
+        CHUNK = 500 # to avoid N + 1 pattern, we ask for ingredient in chunks
+
+        for i in range(0, len(ids), CHUNK):
+            chunk = ids[i:i+CHUNK]
+            stmt = select(IngredientModel).where(IngredientModel.id.in_(chunk))
+            rows = (self.session.execute(stmt).scalars().all())
+            for r in rows:
+                result[r.id] = self._to_domain(r)
+        
+        return result 
+
     def find_by_name(self, query: str, limit: int = 10) -> list[Ingredient]:
         rows: list[IngredientModel] = (
             self.session.query(IngredientModel)
