@@ -21,8 +21,6 @@ class IngredientCreate(BaseModel):
     carbs_per_100g: float = Field(..., ge=0)
     fats_per_100g: float = Field(..., ge=0)
     proteins_per_100g: float = Field(..., ge=0)
-    source: str = Field(..., min_length=1, max_length=10)
-    external_id: str = Field(..., min_length=1, max_length=64)
 
 class IngredientUpdate(BaseModel):
     name: Optional[str] = Field(default=None, min_length=1, max_length=64)
@@ -41,8 +39,6 @@ class IngredientRead(BaseModel):
     carbs_per_100g: float = Field(...)
     fats_per_100g: float = Field(...)
     proteins_per_100g: float = Field(...)
-    source: str = Field(...)
-    external_id: str = Field(...)
 
 # --------------------
 # Meals
