@@ -1,5 +1,4 @@
 from .domain import (
-    IngredientSource,
     Ingredient,
     Meal,
     MealEntry,
@@ -7,7 +6,6 @@ from .domain import (
 )
 
 __all__ = [
-    "IngredientSource",
     "Ingredient",
     "Meal",
     "MealEntry",

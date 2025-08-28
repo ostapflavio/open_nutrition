@@ -3,7 +3,7 @@ from fastapi import APIRouter
 from starlette import status 
 from typing import Annotated
 from src.infrastructure.repositories.meal_repo import MealRepo
-from src.
+from src.services.meal_service import MealService
 router = APIRouter(prefix='/meals', tags=['meals'])
 
 def get_service(session: db_dependency):

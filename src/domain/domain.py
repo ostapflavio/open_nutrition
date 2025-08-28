@@ -1,6 +1,5 @@
 from __future__ import annotations 
-from enum import Enum 
-from dataclasses import dataclass 
+from dataclasses import dataclass
 from datetime import datetime 
 
 # ---------- Entities ----------
@@ -11,8 +10,6 @@ class Ingredient:
     proteins_per_100g: float
     carbs_per_100g:   float 
     kcal_per_100g:    float
-    source: IngredientSource 
-    external_id: str | None
     id: int | None = None
 
     def __eq__(self, other: object) -> bool:
@@ -36,10 +33,6 @@ class Meal:
         pass
     
 # ---------- Value Objects ----------
-class IngredientSource(Enum): 
-    USDA = "usda"  
-    CUSTOM = "custom"
-
 @dataclass
 class MealEntry:
     ingredient: Ingredient

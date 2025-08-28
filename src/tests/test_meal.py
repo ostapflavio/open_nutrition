@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, timedelta
 import pytest
 
-from src.domain import Meal, MealEntry, Ingredient, IngredientSource
+from src.domain import Meal, MealEntry, Ingredient
 from src.data.database_models import MealModel, MealEntryModel, IngredientModel
 from src.infrastructure.repositories.meal_repo import MealRepo  # adjust if needed
 
@@ -17,8 +17,6 @@ def to_domain_ingredient(im: IngredientModel) -> Ingredient:
         proteins_per_100g=im.proteins_per_100g,
         carbs_per_100g=im.carbs_per_100g,
         kcal_per_100g=im.kcal_per_100g,
-        source=IngredientSource(im.source),
-        external_id=im.external_id,
     )
 
 
@@ -34,8 +32,7 @@ def make_meal(
         # placeholder entry; tests usually override with seeded ingredients
         fake_ing = Ingredient(
             id=1, name="X", fats_per_100g=0, proteins_per_100g=0,
-            carbs_per_100g=0, kcal_per_100g=0, source=IngredientSource.CUSTOM,
-            external_id="X"
+            carbs_per_100g=0, kcal_per_100g=0
         )
         entries = [MealEntry(ingredient=fake_ing, quantity_g=100)]
     return Meal(

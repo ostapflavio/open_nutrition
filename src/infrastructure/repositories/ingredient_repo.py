@@ -1,4 +1,4 @@
-from src.domain import IngredientSource, Ingredient
+from src.domain import Ingredient
 from src.domain.errors import IngredientNotFound
 from src.data.database_models import IngredientModel
 from sqlalchemy import func
@@ -13,12 +13,6 @@ class IngredientRepo:
         if row is None:
             raise IngredientNotFound("Ingredient not found.")
 
-        # convert to enum 
-        source = row.source 
-
-        # type check 
-        if not isinstance(source, IngredientSource):
-            source = IngredientSource(source)
 
         return Ingredient(
             id=row.id,
@@ -27,8 +21,6 @@ class IngredientRepo:
             proteins_per_100g=row.proteins_per_100g,
             carbs_per_100g=row.carbs_per_100g,
             kcal_per_100g=row.kcal_per_100g,
-            source=source,
-            external_id=row.external_id,
         )    
 
     def __init__(self, session):
@@ -61,8 +53,6 @@ class IngredientRepo:
                         carbs_per_100g = domain_ingredient.carbs_per_100g, 
                         proteins_per_100g = domain_ingredient.proteins_per_100g, 
                         fats_per_100g = domain_ingredient.fats_per_100g,
-                        source = domain_ingredient.source.value, 
-                        external_id = domain_ingredient.external_id
                     )
         self.session.add(ingredient)
         self.session.commit()
@@ -81,17 +71,13 @@ class IngredientRepo:
 
         if not ingredient:
             raise IngredientNotFound(f"Ingredient with {'ID' if isinstance(identifier, int) else 'name'} '{identifier}' not found.")
-        
-        if "source" in kwargs and kwargs["source"] is not None:
-            source = kwargs.pop("source")
-            ingredient.source = source.value if isinstance(source, IngredientSource) else str(source) 
+
         updatable = {
             "name",
             "kcal_per_100g",
             "carbs_per_100g",
             "proteins_per_100g",
             "fats_per_100g",
-            "external_id",
         }
         for key, value in kwargs.items():
             if key in updatable and value is not None:

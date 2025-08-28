@@ -1,5 +1,5 @@
 # src/infrastructure/repositories/meal_repo.py  (path example)
-from src.domain import Meal, MealEntry, Ingredient, IngredientSource
+from src.domain import Meal, MealEntry, Ingredient
 from src.domain.errors import MealNotFound
 from src.data.database_models import MealModel, MealEntryModel, IngredientModel
 from sqlalchemy import func
@@ -83,7 +83,6 @@ class MealRepo:
     # ——— Conversion helpers ———
 
     def _to_domain_ingredient(self, row: IngredientModel) -> Ingredient:
-        # DB stores source as str; domain wants IngredientSource enum
         return Ingredient(
             id=row.id,
             name=row.name,
@@ -91,8 +90,6 @@ class MealRepo:
             proteins_per_100g=row.proteins_per_100g,
             carbs_per_100g=row.carbs_per_100g,
             kcal_per_100g=row.kcal_per_100g,
-            source=IngredientSource(row.source),
-            external_id=row.external_id,
         )
 
     def _ensure_utc(self, dt):

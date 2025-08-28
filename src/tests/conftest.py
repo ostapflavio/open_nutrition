@@ -8,7 +8,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker 
 
 from src.data.database_models import Base, IngredientModel
-from src.domain import IngredientSource 
 
 @pytest.fixture
 def session(tmp_path, request):
@@ -39,33 +38,27 @@ def seed_ingredients(session):
     rows = [
         IngredientModel(
             name = "Apple",
-            fats_per_100g = 0.2, proteins_per_100g = 0.3, carbs_per_100g=14.0, kcal_per_100g = 100.0, 
-            source=IngredientSource.CUSTOM.value, external_id = "DEFAULT1"
+            fats_per_100g = 0.2, proteins_per_100g = 0.3, carbs_per_100g=14.0, kcal_per_100g = 100.0
         ),
        IngredientModel(
             name = "Banana",
-            fats_per_100g = 0.2, proteins_per_100g = 0.3, carbs_per_100g=14.0, kcal_per_100g = 160.0, 
-            source=IngredientSource.CUSTOM.value, external_id = "DEFAULT2"
+            fats_per_100g = 0.2, proteins_per_100g = 0.3, carbs_per_100g=14.0, kcal_per_100g = 160.0
         ),
        IngredientModel(
             name = "Mango",
-            fats_per_100g = 0.2, proteins_per_100g = 0.3, carbs_per_100g=14.0, kcal_per_100g = 60.0, 
-            source=IngredientSource.CUSTOM.value, external_id = "DEFAULT3"
+            fats_per_100g = 0.2, proteins_per_100g = 0.3, carbs_per_100g=14.0, kcal_per_100g = 60.0
         ),
         IngredientModel(
             name = "Chicken Breast",
-            fats_per_100g = 3.6, proteins_per_100g = 31.0, carbs_per_100g=10.0, kcal_per_100g = 50.0, 
-            source=IngredientSource.CUSTOM.value, external_id = "DEFAULT4"
+            fats_per_100g = 3.6, proteins_per_100g = 31.0, carbs_per_100g=10.0, kcal_per_100g = 50.0
         ),
         IngredientModel(
             name = "almond milk",
-            fats_per_100g = 3.6, proteins_per_100g = 0.5, carbs_per_100g=70.5, kcal_per_100g = 60.0, 
-            source=IngredientSource.CUSTOM.value, external_id = "DEFAULT5"
+            fats_per_100g = 3.6, proteins_per_100g = 0.5, carbs_per_100g=70.5, kcal_per_100g = 60.0
         ),
         IngredientModel(
             name = "Egg",
-            fats_per_100g = 11.0, proteins_per_100g = 6.0, carbs_per_100g=1.1, kcal_per_100g = 70.0, 
-            source=IngredientSource.CUSTOM.value, external_id = "DEFAULT6"
+            fats_per_100g = 11.0, proteins_per_100g = 6.0, carbs_per_100g=1.1, kcal_per_100g = 70.0
         ),
     ]
 
