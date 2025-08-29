@@ -81,7 +81,7 @@ class MealService:
 
         updated = self.meals.update(meal_id, dom_meal)
         if updated is None:
-            raise MealNotFound(message="Meal not found.", entity="Meal", entity_id=str(meal_id))
+            raise MealNotFound(message="Meal not found.")
         
         return updated 
 
