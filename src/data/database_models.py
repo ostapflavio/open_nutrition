@@ -15,7 +15,7 @@ class MealModel(Base):
 
     id        = Column(Integer, primary_key = True)
     eaten_at = Column(DateTime(timezone=True), server_default=func.now(), nullable = False)
-    name      = Column(String(256), nullable = False)
+    name      = Column(String(512), nullable = False)
 
     # one meal -> many entries
     entries = relationship(
@@ -64,7 +64,7 @@ class FavoriteMealModel(Base):
     id            = Column(Integer, primary_key = True)
     meal_id       = Column(Integer, ForeignKey('history_meals.id'), nullable = False, index = True)
     starred_at    = Column(DateTime(timezone=True), server_default = func.now(), nullable = False)
-    name          = Column(String(256), nullable = False)
+    name          = Column(String(512), nullable = False)
 
     meal = relationship('MealModel', back_populates = 'favorite')
 
@@ -79,7 +79,7 @@ class IngredientModel(Base):
     __tablename__ = 'ingredients'
 
     id                   = Column(Integer, primary_key = True)
-    name                 = Column(String(256), nullable = False)
+    name                 = Column(String(512), nullable = False)
     kcal_per_100g        = Column(Float, nullable = False)
     carbs_per_100g       = Column(Float, nullable = False)
     fats_per_100g        = Column(Float, nullable = False)

@@ -16,7 +16,7 @@ class DateRange(BaseModel):
 # --------------------
 
 class IngredientCreate(BaseModel):
-    name: str = Field(..., min_length=1, max_length=256)
+    name: str = Field(..., min_length=1, max_length=512)
     kcal_per_100g: float = Field(..., ge=0)
     carbs_per_100g: float = Field(..., ge=0)
     fats_per_100g: float = Field(..., ge=0)
@@ -24,7 +24,7 @@ class IngredientCreate(BaseModel):
 
 
 class IngredientUpdate(BaseModel):
-    name: Optional[str] = Field(default=None, min_length=1, max_length=256)
+    name: Optional[str] = Field(default=None, min_length=1, max_length=512)
     kcal_per_100g: Optional[float] = Field(default=None, ge=0)
     carbs_per_100g: Optional[float] = Field(default=None, ge=0)
     fats_per_100g: Optional[float] = Field(default=None, ge=0)
@@ -60,12 +60,12 @@ class MealEntryRead(BaseModel):
     grams: float = Field(...)
 
 class MealCreate(BaseModel):
-    name: str = Field(..., min_length=1, max_length=256)
+    name: str = Field(..., min_length=1, max_length=512)
     eaten_at: Optional[datetime] = Field(default=None)
     entries: List[MealEntryCreate] = Field(default_factory=list)
 
 class MealUpdate(BaseModel):
-    name: Optional[str] = Field(default=None, min_length=1, max_length=256)
+    name: Optional[str] = Field(default=None, min_length=1, max_length=512)
     eaten_at: Optional[datetime] = Field(default=None)
 
 class MealRead(BaseModel):
@@ -82,7 +82,7 @@ class MealRead(BaseModel):
 
 class FavoriteCreate(BaseModel):
     meal_id: int = Field(..., ge=1)
-    name: str = Field(..., min_length=1, max_length=256)
+    name: str = Field(..., min_length=1, max_length=512)
 
 
 class FavoriteRead(BaseModel):
