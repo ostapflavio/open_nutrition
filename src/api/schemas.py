@@ -55,7 +55,7 @@ class MealEntryUpdate(BaseModel):
 class MealEntryRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int = Field(...)
+    id: Optional[int] = Field(default=None)
     ingredient_id: int = Field(...)
     grams: float = Field(...)
 
@@ -67,6 +67,7 @@ class MealCreate(BaseModel):
 class MealUpdate(BaseModel):
     name: Optional[str] = Field(default=None, min_length=1, max_length=512)
     eaten_at: Optional[datetime] = Field(default=None)
+    entries: Optional[List[MealEntryCreate]] = Field(default=None)
 
 class MealRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
