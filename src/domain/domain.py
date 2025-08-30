@@ -37,7 +37,7 @@ class Meal:
 class MealEntry:
     ingredient: Ingredient
     quantity_g: float
-
+    id: int | None = None # allow user change an exact ingredient for PATCH operation
     def __post_init__(self):
         if self.quantity_g <= 0:
             raise ValueError("quantity_g must be > 0")

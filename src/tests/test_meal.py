@@ -3,6 +3,7 @@ import pytest
 
 from src.domain import Meal, MealEntry, Ingredient
 from src.data.database_models import MealModel, MealEntryModel, IngredientModel
+from src.domain.errors import MealNotFound
 from src.infrastructure.repositories.meal_repo import MealRepo  # adjust if needed
 
 
@@ -218,3 +219,122 @@ def test_delete_removes_meal_and_child_entries(session, seed_ingredients):
     assert session.get(MealModel, meal_id) is None
     # children should be gone (relationship cascade 'all, delete-orphan')
     assert session.query(MealEntryModel).filter_by(meal_id=meal_id).count() == 0
+
+
+def test_update_entry_quantity_happy_path(session, seed_ingredients):
+    by_name, _ = seed_ingredients
+    repo = MealRepo(session)
+    apple = to_domain_ingredient(by_name["Apple"])
+
+    created = repo.create(make_meal("M1", entries = [MealEntry(ingredient=apple, quantity_g=100)]))
+    meal_id = created.id
+
+    # grab the entry id from DB to simulate UI behavior
+    entry = session.query(MealEntryModel).filter_by(meal_id=meal_id).first()
+    assert entry.grams == 100
+
+    repo.update_entry_quantity(meal_id=meal_id, entry_id=entry.id, grams=175.5)
+
+    session.expire_all()
+    changed = session.get(MealEntryModel, entry.id)
+    assert changed.grams == 175.5
+
+    # domain view also reflects the change
+    got = repo.get_by_id(meal_id)
+    assert got.entries[0].quantity_g == 175.5
+
+def test_update_entry_quantity_wrong_meal_raises(session, seed_ingredients):
+    by_name, _ = seed_ingredients
+    repo = MealRepo(session)
+    apple = to_domain_ingredient(by_name["Apple"])
+    banana = to_domain_ingredient(by_name["Banana"])
+
+    m1 = repo.create(make_meal("M1", entries = [MealEntry(ingredient=apple, quantity_g=50)]))
+    m2 = repo.create(make_meal("M1", entries = [MealEntry(ingredient=banana, quantity_g=60)]))
+
+    entry_m1 = session.query(MealEntryModel).filter_by(meal_id=m1.id).first()
+    # try to update entry_m1 through meal m2 -> should raise
+    with pytest.raises(MealNotFound):
+        repo.update_entry_quantity(meal_id=m2.id, entry_id=entry_m1.id, grams=99)
+
+def test_update_entry_ingredient_happy_path(session, seed_ingredients):
+    by_name, _ = seed_ingredients
+    repo = MealRepo(session)
+    apple = to_domain_ingredient(by_name["Apple"])
+    banana = to_domain_ingredient(by_name["Banana"])
+
+    created = repo.create(make_meal("Swap", entries = [MealEntry(ingredient=apple, quantity_g=120)]))
+    meal_id = created.id
+    entry = session.query(MealEntryModel).filter_by(meal_id=meal_id).first()
+
+    repo.update_entry_ingredient(meal_id=meal_id, entry_id=entry.id, ingredient_id=banana.id)
+
+    session.expire_all()
+    changed = session.get(MealEntryModel, entry.id)
+    assert changed.ingredient_id == banana.id
+
+    got = repo.get_by_id(meal_id)
+    assert got.entries[0].ingredient.id == banana.id
+
+def test_update_entry_ingredient_wrong_meal_raises(session, seed_ingredients):
+    by_name, _ = seed_ingredients
+    repo = MealRepo(session)
+    apple = to_domain_ingredient(by_name["Apple"])
+    banana = to_domain_ingredient(by_name["Banana"])
+
+    m1 = repo.create(make_meal("M1", entries = [MealEntry(ingredient=apple, quantity_g=10)]))
+    m2 = repo.create(make_meal("M2", entries = [MealEntry(ingredient=banana, quantity_g=20)]))
+
+    entry_m1 = session.query(MealEntryModel).filter_by(meal_id=m1.id).first()
+
+    with pytest.raises(MealNotFound):
+        repo.update_entry_ingredient(meal_id=m2.id, entry_id=entry_m1.id, ingredient_id=banana.id)
+
+def test_delete_entry_removes_only_that_row(session, seed_ingredients):
+    by_name, _ = seed_ingredients
+    repo = MealRepo(session)
+    apple = to_domain_ingredient(by_name["Apple"])
+    banana = to_domain_ingredient(by_name["Banana"])
+
+    created = repo.create(
+        Meal(
+            id=None,
+            name="Two entries",
+            eaten_at=datetime(2025, 1, 1, 12, 0, tzinfo=timezone.utc),
+            is_favorite=False,
+            entries=[
+                MealEntry(ingredient=apple, quantity_g=30),
+                MealEntry(ingredient=banana, quantity_g=40),
+            ],
+        )
+    )
+    meal_id = created.id
+    entries = session.query(MealEntryModel).filter_by(meal_id=meal_id).all()
+    assert len(entries) == 2
+
+    to_delete = entries[0]
+    repo.delete_entry(meal_id=meal_id, entry_id=to_delete.id)
+
+    remaining = session.query(MealEntryModel).filter_by(meal_id=meal_id).all()
+    assert len(remaining) == 1
+    assert remaining[0].id != to_delete.id
+
+def test_delete_entry_wrong_meal_no_effect(session, seed_ingredients):
+    by_name, _ = seed_ingredients
+    repo = MealRepo(session)
+    apple = to_domain_ingredient(by_name["Apple"])
+    banana = to_domain_ingredient(by_name["Banana"])
+
+    m1 = repo.create(make_meal("M1", entries = [MealEntry(ingredient=apple, quantity_g=33)]))
+    m2 = repo.create(make_meal("M2", entries = [MealEntry(ingredient=banana, quantity_g=44)]))
+
+    entry_m1 = session.query(MealEntryModel).filter_by(meal_id=m1.id).first()
+    cnt_before_m2 = session.query(MealEntryModel).filter_by(meal_id=m2.id).count()
+
+    # silently returns; you could also choose to raise — your method returns if None
+    repo.delete_entry(meal_id=m2.id, entry_id=entry_m1.id)
+
+    cnt_after_m2 = session.query(MealEntryModel).filter_by(meal_id=m2.id).count()
+    assert cnt_after_m2 == cnt_before_m2
+    # and entry in m1 still exists
+    assert session.get(MealEntryModel, entry_m1.id) is not None
