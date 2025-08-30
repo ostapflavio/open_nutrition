@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from src.infrastructure.repositories.meal_repo import MealRepo
 from src.infrastructure.repositories.ingredient_repo import IngredientRepo
 from src.domain import Meal, MealEntry, Ingredient
-from src.domain.errors import MealNotFound
+from src.domain.errors import MealNotFound, IngredientNotFound
 from src.services.errors import ValidationError
 
 
@@ -33,6 +33,27 @@ class MealService:
         self.ingredients = IngredientRepo(db)
 
     # ---------- Commands / Queries ----------
+
+    def update_entry_quantity(self, *, meal_id: int, entry_id: int, grams: float) -> None:
+        if grams <= 0:
+            raise ValidationError("grams must be positive")
+        self.meals.get_by_id(meal_id) # check for 404 error
+        self.meals.update_entry_quantity(meal_id=meal_id, entry_id=entry_id, grams=grams)
+
+    def update_entry_ingredient(self, *, meal_id: int, entry_id: int, ingredient_id: int) -> None:
+        if ingredient_id < 1:
+            raise ValidationError("ingredient must greater than one")
+        self.meals.get_by_id(meal_id)  # check for 404 error
+        try:
+            self.ingredients.get_by_id(ingredient_id) # will raise if missing
+        except IngredientNotFound:
+            raise ValidationError("ingredient_id not found")
+
+        self.meals.update_entry_ingredient(meal_id=meal_id, entry_id=entry_id, ingredient_id=ingredient_id)
+
+    def remove_entry(self, *, meal_id: int, entry_id: int) -> None:
+        self.meals.get_by_id(meal_id)  # check for 404 error
+        self.meals.delete_entry(meal_id=meal_id, entry_id=entry_id)
 
     # asterisk means that all arguments after that must be passed as keywords 
     # allows cleaner API and prevents bugs from wrong positional ordering
@@ -59,6 +80,10 @@ class MealService:
 
     def get(self, meal_id: int) -> Meal:
         return self.meals.get_by_id(meal_id)
+
+    def list_entries(self, meal_id: int) -> list[MealEntry]:
+        meal = self.meals.get_by_id(meal_id)
+        return meal.entries
 
     def search(self, q: str, limit: int = 10) -> List[Meal]:
         return self.meals.find_by_name(q, limit)
@@ -108,8 +133,8 @@ class MealService:
             g = e.get("grams")
             if iid is None or iid < 1:
                 raise ValidationError(message="ingredient_id must be >= 1", entity="MealEntry")
-            if g is None or g < 0:
-                raise ValidationError(message="grams must be >= 0", entity="MealEntry")
+            if g is None or g <= 0:
+                raise ValidationError(message="grams must be > 0", entity="MealEntry")
             ids_in_order.append(iid)
             grams_in_order.append(g)
 

@@ -50,8 +50,8 @@ class MealEntryCreate(BaseModel):
     grams: float = Field(..., ge=0) 
 
 class MealEntryUpdate(BaseModel):
-    grams: float = Field(..., ge=0)
-
+    grams: Optional[float] = Field(default = None, ge=0)
+    ingredient_id: Optional[int] = Field(default = None, ge = 1)
 class MealEntryRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

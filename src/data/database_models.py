@@ -50,7 +50,7 @@ class MealEntryModel(Base):
     ingredient = relationship('IngredientModel', back_populates = 'meal_entries')
 
     __table_args__ = (
-        CheckConstraint('grams >= 0', name = 'GRAMS_NOT_NEGATIVE'),
+        CheckConstraint('grams > 0', name = 'GRAMS_NOT_NEGATIVE'),
     ) 
 
     def __repr__(self) -> str:
