@@ -1,7 +1,9 @@
 from datetime import datetime, time, timezone, date
+from http.client import HTTPException
 from typing import Literal
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException
+from starlette import status
 
 from src.domain.domain import DataRange
 from src.infrastructure.db import db_dependency
@@ -23,7 +25,7 @@ def get_daily_and_macro_stats(
             end=datetime.combine(end_date, time.max, tzinfo=timezone.utc),
         )
     except ValueError as e:
-        raise ValidationError(str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     svc = StatsService(db)
     result: StatsResult = svc.daily_calories_and_macro_split(dr, macro_basis=macro_basis)
