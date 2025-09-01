@@ -1,8 +1,9 @@
-# src/infrastructure/repositories/meal_repo.py  (path example)
+from datetime import datetime
 from src.domain import Meal, MealEntry, Ingredient
 from src.domain.errors import MealNotFound
 from src.data.database_models import MealModel, MealEntryModel, IngredientModel
-from sqlalchemy import func
+from sqlalchemy import func, select
+from sqlalchemy.orm import joinedload
 from datetime import timezone, tzinfo
 
 class MealRepo:
@@ -15,6 +16,21 @@ class MealRepo:
             raise MealNotFound("This meal doesn't exist!")
         return self._to_domain(ent)
 
+    def list_between(self, start: datetime, end: datetime) -> list[Meal]:
+        """
+        List entries in range [start, end]
+        """
+        stmt = (
+            select(MealModel)
+            .where(MealModel.eaten_at >= start, MealModel.eaten_at <= end)
+            .options(
+                joinedload(MealModel.entries)  # MealModel -> entries (collection)
+                .joinedload(MealEntryModel.ingredient)  # Entry -> ingredient (scalar rel)
+            )
+            .order_by(MealModel.eaten_at.desc(), MealModel.id.desc())
+        )
+        rows: list[MealModel] = self.session.execute(stmt).unique().scalars().all()  # <-- unique()
+        return [self._to_domain(r) for r in rows]
 
     def find_by_name(self, query: str, limit: int) -> list[Meal]:
         ents: list[MealModel] = (

@@ -1,7 +1,8 @@
 from __future__ import annotations
 from datetime import datetime, date 
 from pydantic import BaseModel, Field, confloat, ConfigDict
-from typing import Optional, List
+from typing import Optional, List, Literal, Dict
+
 
 # --------------------
 # Utility
@@ -94,3 +95,53 @@ class FavoriteRead(BaseModel):
     name: str = Field(...)
     starred_at: datetime = Field(...)
 
+
+# ----------------------------
+# STATS
+# ----------------------------
+
+class DayCaloriesRead(BaseModel):
+    day: date = Field(..., description = "Calendar day (YYYY-MM-DD")
+    calories: float = Field(..., description="Total kcal for this day")
+
+class MacroPercentagesRead(BaseModel):
+    protein_pct: float = Field(..., description="Protein percentage (0..100")
+    carbs_pct: float = Field(..., description="Carbs percentage (0..100)")
+    fat_pct: float = Field(..., description="Fat percentage (0..100)")
+
+class StatsRead(BaseModel):
+    days: list[DayCaloriesRead] = Field(..., description="Zero-filled daily kcal series")
+    macro_pct: MacroPercentagesRead = Field(..., description="Macro split over the whole range")
+    basis: Literal["kcal", "grams"] = Field("kcal", description="What the macro percetanges are based on: 'kcal' or 'grams'")
+
+# ----------------------------
+# History
+# ----------------------------
+
+class HistoryMealRead(BaseModel):
+    id: int
+    name: str
+    eaten_at: datetime
+    kcal: Optional[float] = None
+    # Optional HATEOAS-like action URLs for your UI to call:
+    actions: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Links to update/delete/star for this meal."
+    )
+
+class HistoryDayRead(BaseModel):
+    day: date  # Local day in the provided timezone
+    total_kcal: Optional[float] = None
+    meals: List[HistoryMealRead]
+
+class HistorySummaryRead(BaseModel):
+    day_count: int
+    meal_count: int
+    total_kcal: Optional[float] = None
+
+class HistoryRead(BaseModel):
+    range_start: datetime
+    range_end: datetime
+    timezone: str                      # IANA timezone name for correct time conversion
+    days: List[HistoryDayRead]
+    summary: HistorySummaryRead

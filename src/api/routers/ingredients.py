@@ -31,7 +31,7 @@ def _to_ing_read(ing: Ingredient) -> IngredientRead:
 
 def _handle_service_exc(exc: Exception):
     if isinstance(exc, ValidationError):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recieved bad data.")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Recieved bad data.")
     if isinstance(exc, IngredientNotFound):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Couldn't find ingredient")
     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
