@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query
+from datetime import datetime
+
+from fastapi import APIRouter, HTTPException, Query, Path
 from starlette import status
 
 from src.infrastructure.db import db_dependency
@@ -14,7 +16,7 @@ from src.api.schemas import (
     MealRead,
     MealUpdate,
     MealEntryRead,
-    MealEntryUpdate
+    MealEntryUpdate,
 )
 
 router = APIRouter(prefix='/meals', tags=['meals'])
