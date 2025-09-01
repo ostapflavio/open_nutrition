@@ -61,7 +61,7 @@ def serach_ingredient(db: db_dependency, q: str = Query(..., min_length=1, descr
     except Exception as e:
         _handle_service_exc(e)
 
-@router.get("/{ingredients_id}", response_model=IngredientRead)
+@router.get("/{ingredient_id}", response_model=IngredientRead)
 def get_ingredient(ingredient_id: int, db: db_dependency):
     svc = IngredientService(db)
     try:
@@ -70,7 +70,7 @@ def get_ingredient(ingredient_id: int, db: db_dependency):
     except Exception as e:
         _handle_service_exc(e)
 
-@router.put("/{ingredien_id}", response_model=IngredientRead)
+@router.put("/{ingredient_id}", response_model=IngredientRead)
 def update_ingredient(db: db_dependency, ingredient_id: int, payload: IngredientUpdate):
     svc = IngredientService(db)
     try:
