@@ -2,7 +2,7 @@ from sqlalchemy import select
 
 from src.domain.domain import Meal
 from src.data.database_models import FavoriteMealModel
-from src.domain.errors import MealNotFound, FavoriteAlreadyExists
+from src.domain.errors import FavoriteNotFound, FavoriteAlreadyExists
 from src.infrastructure.repositories.meal_repo import MealRepo
 
 class FavoriteRepo:
@@ -14,8 +14,7 @@ class FavoriteRepo:
         '''Return the meal that is marked as favorite.'''
         favorite: FavoriteMealModel | None = self.session.get(FavoriteMealModel, favorite_id)
         if favorite is None:
-            # TODO: Rework the NotFound error 
-            raise MealNotFound(message = "Favorite meal was not found!", identifier = favorite_id)
+            raise FavoriteNotFound(message = "Favorite meal was not found!", identifier = favorite_id)
 
         meal_id: int = favorite.meal_id
         return self._meal_repo.get_by_id(meal_id) 
@@ -26,7 +25,7 @@ class FavoriteRepo:
 
         existing = self.session.query(FavoriteMealModel).filter_by(meal_id = meal_id).first()
         if existing is not None:
-            raise FavoriteAlreadyExists(meal_id)
+            raise FavoriteAlreadyExists(entity_id=meal_id)
 
         new_favorite_meal: FavoriteMealModel = FavoriteMealModel(meal_id = meal_id, name = domain_meal.name)
         self.session.add(new_favorite_meal)
@@ -38,8 +37,7 @@ class FavoriteRepo:
         ''' Delete a starred meal. ''' 
         favorite: FavoriteMealModel | None = self.session.get(FavoriteMealModel, favorite_id)
         if favorite is None:
-            # TODO: Rework the NotFound error 
-            raise MealNotFound(message = "Favorite meal was not found!", identifier = favorite_id)
+            raise FavoriteNotFound(message = "Favorite meal was not found!", identifier = favorite_id)
 
         self.session.delete(favorite) 
         self.session.commit()
@@ -50,7 +48,7 @@ class FavoriteRepo:
         favorite: FavoriteMealModel | None = self.session.get(FavoriteMealModel, favorite_id)
         if favorite is None:
             # TODO: Rework the NotFound error 
-            raise MealNotFound(message = "Favorite meal was not found!", identifier = favorite_id)
+            raise FavoriteNotFound(message = "Favorite meal was not found!", identifier = favorite_id)
 
         meal_id: int = favorite.meal_id 
         current_meal: Meal = self._meal_repo.update(meal_id, domain_meal)
@@ -64,4 +62,12 @@ class FavoriteRepo:
             .limit(limit)
         )
 
+        return self.session.execute(stmt).scalars().all()
+
+    def list_all(self, limit: int = 100) -> list[FavoriteMealModel]:
+        stmt = (
+            select(FavoriteMealModel)
+            .order_by(FavoriteMealModel.starred_at.desc())
+            .limit(limit)
+        )
         return self.session.execute(stmt).scalars().all()
