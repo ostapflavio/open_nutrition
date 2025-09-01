@@ -1,5 +1,5 @@
 # src/infrastructure/repositories/meal_repo.py  (path example)
-from src.domain import Meal, MealEntry, Ingredient, IngredientSource
+from src.domain import Meal, MealEntry, Ingredient
 from src.domain.errors import MealNotFound
 from src.data.database_models import MealModel, MealEntryModel, IngredientModel
 from sqlalchemy import func
@@ -14,6 +14,7 @@ class MealRepo:
         if ent is None:
             raise MealNotFound("This meal doesn't exist!")
         return self._to_domain(ent)
+
 
     def find_by_name(self, query: str, limit: int) -> list[Meal]:
         ents: list[MealModel] = (
@@ -73,6 +74,20 @@ class MealRepo:
         self.session.commit()
         return self._to_domain(ent)
 
+    def update_entry_quantity(self, *, meal_id: int, entry_id: int, grams: float) -> None:
+        ent = self._get_entry(meal_id, entry_id)
+        if ent is None:
+            raise MealNotFound("Entry not found for this meal")
+        ent.grams = grams
+        self.session.commit()
+
+    def update_entry_ingredient(self, *, meal_id: int, entry_id: int, ingredient_id: int) -> None:
+        ent = self._get_entry(meal_id, entry_id)
+        if ent is None:
+            raise MealNotFound("Entry not found for this meal")
+        ent.ingredient_id = ingredient_id
+        self.session.commit()
+
     def delete(self, meal_id: int) -> None:
         ent = self.session.get(MealModel, meal_id)
         if ent is None:
@@ -80,10 +95,15 @@ class MealRepo:
         self.session.delete(ent)
         self.session.commit()
 
+    def delete_entry(self, *, meal_id: int, entry_id: int) -> None:
+        ent = self._get_entry(meal_id, entry_id)
+        if ent is None:
+            return
+        self.session.delete(ent)
+        self.session.commit()
     # ——— Conversion helpers ———
 
     def _to_domain_ingredient(self, row: IngredientModel) -> Ingredient:
-        # DB stores source as str; domain wants IngredientSource enum
         return Ingredient(
             id=row.id,
             name=row.name,
@@ -91,8 +111,6 @@ class MealRepo:
             proteins_per_100g=row.proteins_per_100g,
             carbs_per_100g=row.carbs_per_100g,
             kcal_per_100g=row.kcal_per_100g,
-            source=IngredientSource(row.source),
-            external_id=row.external_id,
         )
 
     def _ensure_utc(self, dt):
@@ -110,6 +128,7 @@ class MealRepo:
             MealEntry(
                 ingredient=self._to_domain_ingredient(e.ingredient),  # use relationship
                 quantity_g=e.grams,
+                id=e.id,
             )
             for e in ent.entries
         ]
@@ -120,3 +139,7 @@ class MealRepo:
             is_favorite=(ent.favorite is not None),  # MealModel has `favorite` relation, not `is_favorite` field
             entries=entries,
         )
+
+    def _get_entry(self, meal_id: int, entry_id: int) -> MealEntryModel | None:
+        meal_entry = self.session.query(MealEntryModel).filter_by(meal_id=meal_id, id=entry_id).one_or_none()
+        return meal_entry
