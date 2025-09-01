@@ -61,6 +61,10 @@ class FavoriteAlreadyExists(AlreadyExists):
     code: ClassVar[str] = "FAVORITE_ALREADY_EXISTS"
     entity_name: ClassVar[str] = "Favorite"
 
+class FavoriteNotFound(NotFound):
+    code: ClassVar[str] = "FAVORITE_NOT_FOUND"
+    entity_name: ClassVar[str] = "Favorite"
+
 class ExternalIngredientFormatError(DomainError):
     code: ClassVar[str] = "EXTERNAL_INGREDIENT_FORMAT_ERROR"
 

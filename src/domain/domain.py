@@ -30,8 +30,12 @@ class Meal:
             raise ValueError("eaten_at must be timezone-aware (UTC)")
 
     def compute_totals(self) -> MacroTotals:
-        pass
-    
+        """Sum macros across all entries."""
+        total = MacroTotals.zero()
+        for e in self.entries:
+            total = total + e.compute_macros()
+        return total
+
 # ---------- Value Objects ----------
 @dataclass
 class MealEntry:
@@ -43,7 +47,14 @@ class MealEntry:
             raise ValueError("quantity_g must be > 0")
 
     def compute_macros(self) -> MacroTotals:
-        pass
+        """ Scale ingredient's per_100g macros to this entriy's grams."""
+        factor = self.quantity_g / 100
+        return MacroTotals(
+            kcal=self.ingredient.kcal_per_100g * factor,
+            proteins=self.ingredient.proteins_per_100g * factor,
+            carbs=self.ingredient.carbs_per_100g * factor,
+            fats=self.ingredient.fats_per_100g * factor,
+        )
 
    
 @dataclass(frozen = True)
@@ -69,7 +80,24 @@ class MacroTotals:
                 kcal = 0)
     
     def ratios(self) -> dict[str, float]:
-        pass
+        """
+        Return macro calorie share as fractions of macro-derived kcal.
+        Protein=4 , Carbs=4, Fats=9 kcal/g. If total are zero, return 0.
+        Note: We normalize by (4P + 4C + 9F) instead of self.kcal to avoid rounding/fiber drift
+        """
+
+        protein_kcal = self.proteins * 4.0
+        carb_kcal = self.carbs * 4.0
+        fat_kcal = self.fats * 4.0
+
+        macro_kcal = protein_kcal + carb_kcal + fat_kcal
+        if macro_kcal <= 0:
+            return {"proteins": 0, "carbs": 0, "fats": 0}
+        return {
+            "proteins": protein_kcal / macro_kcal,
+            'fat': fat_kcal / macro_kcal,
+            'carb': carb_kcal / macro_kcal,
+        }
 
 @dataclass(frozen = True)
 class DataRange:
