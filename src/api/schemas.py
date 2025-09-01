@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import datetime, date 
 from pydantic import BaseModel, Field, confloat, ConfigDict
-from typing import Optional, List
+from typing import Optional, List, Literal
 
 # --------------------
 # Utility
@@ -94,3 +94,21 @@ class FavoriteRead(BaseModel):
     name: str = Field(...)
     starred_at: datetime = Field(...)
 
+
+# ----------------------------
+# STATS
+# ----------------------------
+
+class DayCaloriesRead(BaseModel):
+    day: date = Field(..., description = "Calendar day (YYYY-MM-DD")
+    calories: float = Field(..., description="Total kcal for this day")
+
+class MacroPercentagesRead(BaseModel):
+    protein_pct: float = Field(..., description="Protein percentage (0..100")
+    carbs_pct: float = Field(..., description="Carbs percentage (0..100)")
+    fat_pct: float = Field(..., description="Fat percentage (0..100)")
+
+class StatsRead(BaseModel):
+    days: list[DayCaloriesRead] = Field(..., description="Zero-filled daily kcal series")
+    macro_pct: MacroPercentagesRead = Field(..., description="Macro split over the whole range")
+    basis: Literal["kcal", "grams"] = Field("kcal", description="What the macro percetanges are based on: 'kcal' or 'grams'")
